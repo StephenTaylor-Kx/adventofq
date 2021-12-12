@@ -74,13 +74,13 @@ q)show a
 ```
 Oleg Finkelshteyn has a simpler (and faster) solution that baffles me.
 ```q
-q)-1+sum(3_d)>-3_d
-1428
+q)sum(3_d)>-3_d
+1429
 ```
 Factoring out the repeated 3s, I prefer this as
 ```q
-q)-1+sum .[>] (1 neg\3)_\:d
-1428
+q)sum .[>] (1 neg\3)_\:d
+1429
 ```
 but still cannot see why comparing `d[i]` to `d[i-3]` gives the same result as comparing the moving sums. Help, anyone?
 
@@ -110,11 +110,16 @@ q)show c:value each read0`:day2.txt
 ```
 The final position and depth are simply the sum of `c` and the answer to part 1 their product.
 ```q
-a[`$"2-1"]:prd sum c
+q)show a[`$"2-1"]:prd sum c
+1561344
 ```
 Part 2 complicates the picture. The first column of `c` still describes forward movements. But we now need to calculate ‘aim’. Up and Down now adjust aim. Depth changes by the product of forward motion and aim.
 ```q
-fwd:c[;0]; ud:c[;1] / forward; up-down
-a[`$"2-2"]:prd sum each(fwd;fwd*sums ud)
+q)fwd:c[;0]; ud:c[;1] / forward; up-down
+q)show a[`$"2-2"]:prd sum each(fwd;fwd*sums ud)
+1848454425
 ```
+Code golfers will prefer `prd sum@/:(fwd;fwd*sums ud)` but good q style is to use the keywords where they improve legibility. 
+
+
 
