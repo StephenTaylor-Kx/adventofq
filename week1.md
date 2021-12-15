@@ -178,12 +178,12 @@ q)show dg:"1"=read0`:day3.txt / diagnostic
 
 Finding the most common bit is just comparing the the sum of `dg` to half its count.
 ```q
-q)sum[dg]>count[dg]div 2  / gamma bits
+q)sum[dg]>=count[dg]%2  / gamma bits
 001110101101b
 ```
 And the least-common bit is a slight variation.
 ```q
-q)sum[dg]<=count[dg]div 2  / epsilon bits
+q)sum[dg]<count[dg]%2  / epsilon bits
 110001010010b
 ```
 which suggests finding both with a projection. 
@@ -192,10 +192,14 @@ q)(>=;<){.[x](sum y;count[y]%2)}\:dg
 001110101101b
 110001010010b
 ```
+Above, a comparison operator is passed to the lambda as its left argument.
+Within the lambda, the [Apply operator](https://code.kx.com/q/ref/apply/) `.` is used to compare `sum y`
+and `count[y]%2`. The [Each Left map iterator](https://code.kx.com/q/ref/maps#each-left-and-each-right) applies the lambda between the two compariuson operators and the diagnostic matrix. 
+
 All that remains is to encode these two binary numbers as decimals and get their product. 
 The complete solution:
 ```q
-q)prd 2 sv'(>;<=){.[x](sum y;count[y]%2)}\:"1"=read0`:day3.txt
+q)prd 2 sv'(>=;<){.[x](sum y;count[y]%2)}\:"1"=read0`:day3.txt
 2967914
 ```
 
@@ -215,7 +219,7 @@ Initially, all the rows are ‘in’.
 (til count dg){$[count i:x where test y x;i;x]}/flip dg
 ```
 Here we can see the structure of the iteration. 
-The initial state `til count dg` is a list of all the rows fo`dg`.
+The initial state `til count dg` is a list of all the rows of`dg`.
 The lambda being iterated tests the first column of `dg` and returns the rows that pass the test. 
 Only the rows listed in the left argument are tested, so eliminated rows stay eliminated. 
 
@@ -256,7 +260,10 @@ On to the puzzle data.
 ```q
 q)dg:"1"=read0`:day3.txt
 q)ogri:first(til count dg) {$[count i:x where y[x]=bc[z]y x;i;x]}[;;>=]/ flip dg / find O2 generator rating
-q)csri:first(til count dg) {$[count i:x where y[x]=bc[z]y x;i;x]}[;;<]/ flip dg / find CO2 scrubberr rating
+q)csri:first(til count dg) {$[count i:x where y[x]=bc[z]y x;i;x]}[;;<]/ flip dg  / find CO2 scrubberr rating
+q)dg ogri,csri
+011110000111b
+111001000110b
 q)prd 2 sv'dg ogri,csri
 7041258
 ```
