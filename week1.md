@@ -272,15 +272,18 @@ q)prd 2 sv'dg ogri,csri
 
 The bingo boards are nicely readable in the text file, but we shall find them more tractable as vectors.
 ```q
-q:read0`:test4.txt
-nums:value first q
-boards:value each" "sv'(where 0=count each q)cut q
+q)q:read0`:test4.txt
+q)nums:value first q
+q)show boards:value each" "sv'(where 0=count each q)cut q
+22 13 17 11 0  8  2  23 4  24 21 9 14 16 7  6  10 3  18 5 1  12 20 15 19
+3  15 0  2  22 9  18 13 17 5  19 8 7  25 23 20 11 10 24 4 14 21 16 12 6
+14 21 17 24 4  10 16 15 9  19 18 8 23 26 20 22 11 13 6  5 2  0  12 3  7
 ```
 A perfectly sensible looping approach would follow real life. We would call each number and see if any board has won. 
 
 We’re not going to do that. We’re going to call all the numbers and see where the wins occur.
 ```q
-s:(|\')boards=/:\:nums  / states: call all the numbers in turn
+s:(or\')boards=/:\:nums  / states: call all the numbers in turn
 ```
 The derived function `=/:\:` (Equal Each Right Each Left) gives us a cross-product on the Equal operator. The list `boards=/:\:nums` has an item for each board. Each item is a boolean matrix: a row for each of the called numbers, the columns corresponding to the board numbers. Here’s the first board with 1s flagging the numbers as they are called in turn.
 ```q
@@ -327,7 +330,6 @@ Clearly not. That would require all 1s on at least one row. Or a column.
 ```q
 q)any all each {x,flip x}5 cut s[0;9;]
 0b
-q)won:{any all each{x,flip x}5 cut x}
 ```
 Now we can flag the wins.
 ```q
