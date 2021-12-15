@@ -108,18 +108,56 @@ q)show c:value each read0`:day2.txt
 0 7
 ..
 ```
-The final position and depth are simply the sum of `c` and the answer to part 1 their product.
+The final position and depth are simply the sum of `c` and the answer to part 1 is their product.
 ```q
 q)show a[`$"2-1"]:prd sum c
 1561344
 ```
 Part 2 complicates the picture. The first column of `c` still describes forward movements. But we now need to calculate ‘aim’. Up and Down now adjust aim. Depth changes by the product of forward motion and aim.
+
+A table can help us to think this through.
 ```q
+q)crs:{select cmd:x,fwd,ud from flip`fwd`ud!flip value each x}read0`:day2.txt
+q)update aim:sums ud from `crs
+`crs
+q)update down:fwd*aim from `crs
+`crs
+q)show crs
+cmd         fwd ud aim down
+---------------------------
+"forward 3" 3   0  0   0
+"down 7"    0   7  7   0
+"forward 7" 7   0  7   49
+"down 4"    0   4  11  0
+"down 9"    0   9  20  0
+"down 7"    0   7  27  0
+"forward 5" 5   0  27  135
+"forward 9" 9   0  27  243
+"forward 3" 3   0  27  81
+"forward 8" 8   0  27  216
+"down 4"    0   4  31  0
+"down 6"    0   6  37  0
+"down 3"    0   3  40  0
+"forward 7" 7   0  40  280
+"forward 1" 1   0  40  40
+"forward 4" 4   0  40  160
+"down 1"    0   1  41  0
+..
+```
+Now we have the changes in horizontal and vertical position ``crs[`fwd`down]`` and can simply sum for the final position.
+```q
+q)sum each crs[`fwd`down]
+2033 909225
+```
+But the `down` column is no more than the product of the `fwd` column and the accumulated sums of the `ud` column. 
+We can express the whole thing in terms of the `fwd` and `ud`vectors.
+```q
+q)c:value each read0`:day2.txt
 q)fwd:c[;0]; ud:c[;1] / forward; up-down
 q)show a[`$"2-2"]:prd sum each(fwd;fwd*sums ud)
 1848454425
 ```
-Code golfers will prefer `prd sum@/:(fwd;fwd*sums ud)` but good q style is to use the keywords where they improve legibility. 
+Golfers will prefer `sum@/:` to `sum each` but good q style is to use the keywords where they improve legibility. 
 
 
 
