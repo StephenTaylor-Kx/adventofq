@@ -160,4 +160,104 @@ q)show a[`$"2-2"]:prd sum each(fwd;fwd*sums ud)
 Golfers will prefer `sum@/:` to `sum each` but good q style is to use the keywords where they improve legibility. 
 
 
+## Day 3: Binary Diagnostic
+
+Ingestion here is a treat. 
+Comparing the file lines to `"1"` gets us a boolean matrix.
+```q
+q)show dg:"1"=read0`:day3.txt / diagnostic
+110011110101b
+110011100010b
+010100011010b
+011001100000b
+010011011101b
+..
+```
+
+### Part 1
+
+Finding the most common bit is just comparing the the sum of `dg` to half its count.
+```q
+q)sum[dg]>count[dg]div 2  / gamma bits
+001110101101b
+```
+And the least-common bit is a slight variation.
+```q
+q)sum[dg]<=count[dg]div 2  / epsilon bits
+110001010010b
+```
+which suggests finding both with a projection. 
+```q
+q)(>=;<){.[x](sum y;count[y]%2)}\:dg
+001110101101b
+110001010010b
+```
+All that remains is to encode these two binary numbers as decimals and get their product. 
+The complete solution:
+```q
+q)prd 2 sv'(>;<=){.[x](sum y;count[y]%2)}\:"1"=read0`:day3.txt
+2967914
+```
+
+## Part 2
+
+To find the oxygen generator rating we need to filter the rows of `dg` by an aggregation (most-common bit) of its first column, and so on. 
+We are going to have to specify the iteration. 
+Start by naming the aggregator we already defined.
+```q
+bc:{.[x](sum y;count[y]%2)}  / bit counter
+```
+Instead of working across the columns of `dg` we’ll flip it and iterate through its items (rows).
+As each iteration will use the result of the previous iteration, we need the [Accumulator iterators](https://code.kx.com/ref/acumulators/). 
+We’ll use the Scan iterator to filter the rows of `flip dg` until the next iteration would leave no rows left. 
+Initially, all the rows are ‘in’.
+```q
+(til count dg){$[count i:x where test y x;i;x]}/flip dg
+```
+Here we can see the structure of the iteration. 
+The initial state `til count dg` is a list of all the rows fo`dg`.
+The lambda being iterated tests the first column of `dg` and returns the rows that pass the test. 
+Only the rows listed in the left argument are tested, so eliminated rows stay eliminated. 
+
+Our `test` function will take a boolean vector and return the indexes that match the most-common bit. 
+
+We can use the Scan iterator to watch the row indexes being filtered. 
+```q
+q)(til count dg) {$[count i:x where y[x]=bc[>=]y x;i;x]}\ flip"1"=read0`:test3.txt
+1 2 3 4 7 8 9
+2 3 4 8
+2 3 4
+2 3
+,3
+q)dg 3
+10111b
+```
+That is the oxygen generator rating for the test data. 
+Switching the comparison operator wil give us the CO2 scrubber rating.
+So to be tidy, let’s make the comparison operator an argument of the lambda.
+```q
+q)(til count dg) {$[count i:x where y[x]=bc[z]y x;i;x]}[;;>=]\ flip"1"=read0`:test3.txt
+1 2 3 4 7 8 9
+2 3 4 8
+2 3 4
+2 3
+,3
+q)(til count dg) {$[count i:x where y[x]=bc[z]y x;i;x]}[;;<]\ flip"1"=read0`:test3.txt
+0 5 6 10 11
+5 11
+,11
+,11
+,11
+q)dg 11
+01010b
+```
+And there’s the CO2 scrubber rating for the test data.
+On to the puzzle data.
+```q
+q)dg:"1"=read0`:day3.txt
+q)ogri:first(til count dg) {$[count i:x where y[x]=bc[z]y x;i;x]}[;;>=]/ flip dg / find O2 generator rating
+q)csri:first(til count dg) {$[count i:x where y[x]=bc[z]y x;i;x]}[;;<]/ flip dg / find CO2 scrubberr rating
+q)prd 2 sv'dg ogri,csri
+7041258
+```
 
