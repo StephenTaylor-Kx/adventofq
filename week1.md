@@ -564,14 +564,15 @@ q)count each group 3 4 3 1 2
 1| 1
 2| 1
 ```
-But even this is more information than we need. There are only nine possible timer values. A vector of nine integers will represent the fish.
+But even this is more information than we need. There are only nine possible timer values. 
+A vector of nine integers will number the fish at each timer state.
 ```q
 q)show lf:@[9#0;;1+]3 4 3 1 2  / lanternfish school
 0 1 1 2 1 0 0 0 0
 ```
-Notice in the application of [Amend At][https://code.kx.com/q/ref/amend/#amend-at] above the index vector `3 4 3 1 2` contains two 3s. 
+Notice in the application of [Amend At](https://code.kx.com/q/ref/amend/) above the index vector `3 4 3 1 2` contains two 3s. 
 The unary third argument of Amend At, `1+`, is applied twice at index 3. 
-Iteration is implicit in Amend At and need not be specified. . 
+The iteration is implicit in Amend At and need not be specified. 
 
 Now we represent a day’s count-down with a `1 rotate`, which happily rotates the fish with expired timers round to position 8. 
 But position 8 represents newly spawned fish. 
