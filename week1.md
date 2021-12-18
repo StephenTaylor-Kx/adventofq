@@ -685,7 +685,7 @@ q)bs:{?[;y;m]1 not\.[<]x each 0 1+m:floor med y}  / halve range y with fn x
 q)bs[fc1] 0 16
 0 8
 ```
-We can wrap this with a ‘short list’ function that narrows the range to until we are happy to evaluate every point in it: say, no more than 5 points.
+We can wrap this with a ‘short list’ function that narrows the range until we are happy to evaluate every point in it: say, no more than 5 points.
 
 We can use the [While](https://code.kx.com/q/ref/accumulators/#while) iterator with a simple test function `{neg[x]>.[-]y}[n;]`.
 ```q
@@ -711,19 +711,19 @@ fc2:{sum(value x)*fm abs y-key x}[cd;] / fuel cost of moving to position y
 ```
 The difference between the two fuel-cost functions is so small it’s worth making it an argument.
 ```q
-fc:{sum(value x)*y abs z-key x}[cd;;] / fuel cost of moving to position z
+fc:{sum(value x)*y abs z-key x}[cd;;] / Part 2 fuel cost of moving to position z
 ```
 This makes `fc` a binary; its first argument is the fuel multiplier. For Part 1 that can be the [Identity](https://code.kx.com/q/ref/identity/) operator `::`. 
-Note here the use of the q principle: functions, lists and dictionaries are all mappings from one domain to another. The syntax permits us to use either a function or a list as the first argument of `fc`.
+Note here the use of an important q principle: functions, lists and dictionaries are all mappings from one domain to another. The syntax permits us to use either a function or a list as the first argument of `fc`.
 
 Our complete solution:
 ```q
-cp:value first read0`:day7.txt  / crab positions
-cd:count each group cp  / crab distribution
-frd:(min;max)@\:cp  / full range of destinations
+cd:count each group value first read0`:day7.txt  / crab distribution
+frd:(min;max)@\:key cd  / full range of destinations
 fc:{sum(value x)*y abs z-key x}[cd;;] / fuel cost of moving to position z
 bs:{?[;y;m]1 not\.[<]x each 0 1+m:floor med y}  / halve range y with fn x
-sl:{[f;n;r]{neg[x]>.[-]y}[n;] bs[f;]/r} frd  / short list
+sl:{[f;n;r]{neg[x]>.[-]y}[n;] bs[f;]/r}  / short list
 a[`$"7-1"]:min fc[::] each rng sl[fc[::];5;] frd
+fm:sums til 1+max frd
 a[`$"7-2"]:min fc[fm] each rng sl[fc[fm];5;] frd
 ```
