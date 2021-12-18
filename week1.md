@@ -87,37 +87,44 @@ but still cannot see why comparing `d[i]` to `d[i-3]` gives the same result as c
 
 ## Day 2: Dive!
 
-Today‘s text file consists of course adjustments that affect horizontal position and depth.
+Today‘s problem solution uses projections to ingest the data, then a table to think through a solution to the second part. Finally we reduce the table solution to a simpler vector expression.
+
+The text file consists of course adjustments that affect horizontal position and depth.
 ```txt
-forward 3
-down 7
-forward 7
-down 4
-down 9
-..
+forward 5
+down 5
+forward 8
+up 3
+down 8
+forward 2
 ```
+
+### Part 1
+
 Take the starting position and depth as `0 0`. 
 ```q
 q)forward:1 0*; down:0 1*; up:0 -1*
-q)show c:value each read0`:day2.txt
-3 0
-0 7
-7 0
-0 4
-0 9
-0 7
-..
+q)show c:value each read0`:test2.txt
+5 0
+0 5
+8 0
+0 -3
+0 8
+2 0
 ```
 The final position and depth are simply the sum of `c` and the answer to part 1 is their product.
 ```q
-q)show a[`$"2-1"]:prd sum c
-1561344
+q)prd sum c
+150
 ```
+
+### Part 2
+
 Part 2 complicates the picture. The first column of `c` still describes forward movements. But we now need to calculate ‘aim’. Up and Down now adjust aim. Depth changes by the product of forward motion and aim.
 
 A table can help us to think this through.
 ```q
-q)crs:{select cmd:x,fwd,ud from flip`fwd`ud!flip value each x}read0`:day2.txt
+q)crs:{select cmd:x,fwd,ud from flip`fwd`ud!flip value each x}read0`:test2.txt
 q)update aim:sums ud from `crs
 `crs
 q)update down:fwd*aim from `crs
@@ -125,40 +132,42 @@ q)update down:fwd*aim from `crs
 q)show crs
 cmd         fwd ud aim down
 ---------------------------
-"forward 3" 3   0  0   0
-"down 7"    0   7  7   0
-"forward 7" 7   0  7   49
-"down 4"    0   4  11  0
-"down 9"    0   9  20  0
-"down 7"    0   7  27  0
-"forward 5" 5   0  27  135
-"forward 9" 9   0  27  243
-"forward 3" 3   0  27  81
-"forward 8" 8   0  27  216
-"down 4"    0   4  31  0
-"down 6"    0   6  37  0
-"down 3"    0   3  40  0
-"forward 7" 7   0  40  280
-"forward 1" 1   0  40  40
-"forward 4" 4   0  40  160
-"down 1"    0   1  41  0
-..
+"forward 5" 5   0  0   0
+"down 5"    0   5  5   0
+"forward 8" 8   0  5   40
+"up 3"      0   -3 2   0
+"down 8"    0   8  10  0
+"forward 2" 2   0  10  20
 ```
 Now we have the changes in horizontal and vertical position ``crs[`fwd`down]`` and can simply sum for the final position.
 ```q
 q)sum each crs[`fwd`down]
-2033 909225
+15 60
 ```
 But the `down` column is no more than the product of the `fwd` column and the accumulated sums of the `ud` column. 
 We can express the whole thing in terms of the `fwd` and `ud`vectors.
 ```q
-q)c:value each read0`:day2.txt
-q)fwd:c[;0]; ud:c[;1] / forward; up-down
-q)show a[`$"2-2"]:prd sum each(fwd;fwd*sums ud)
-1848454425
+q)`fwd:`ud set'flip c  / forward; up-down
+q)prd sum each(fwd;fwd*sums ud)
+900
 ```
-Golfers will prefer `sum@/:` to `sum each` but good q style is to use the keywords where they improve legibility. 
-
+The repetition of `fwd` draws the eye. 
+Isn’t `(wd;fwd*sums ud)` just `fwd` multiplied by 1 and by `sums ud`?
+```q
+q)prd sum fwd*1,'sums ud
+900
+```
+Or expressed as a function directly on the columns of `c`
+```q
+q)prd sum {x*1,'sums y}. flip c
+```
+That reduces our complete solution to
+```q
+forward:1 0*; down:0 1*; up:0 -1*
+c:value each read0`:day2.txt
+a[`$"2-2"]:prd sum c
+a[`$"2-2"]:prd sum {x*1,'sums y}. flip c
+```
 
 ## Day 3: Binary Diagnostic
 
