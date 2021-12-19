@@ -9,85 +9,118 @@ keywords: aoc, vectordojo
 
 The annual [Advent of Code](https://adventofcode.com) has become a programmers’ Christmas tradition: a daily series of puzzles of varying difficulty to solve and discuss.
 
-This year’s series has raised the excitement level in the dojo because the puzzles are particularly susceptible to vector solutions. 
-Here is a round-up of the first week in the q vector dojo. 
+This year’s series has raised the excitement level in the dōjō because the puzzles are particularly susceptible to vector solutions. 
+Here is a round-up of the first week in the q vector dōjō. 
 
 We nod to code golfers who seek the shortest solutions, and to others pursuing the fastest. 
-But in the dojo we are looking for the most ‘vector-ish’ solutions. 
+But in the dōjō we are looking for the most ‘vector-ish’ solutions. 
 That’s admittedly a bit vague, because it is at bottom an aesthetic criterion. 
 It’s most commonly pronounced “cool”.
 
 Feel free to chime in with comments and alternatives: what follows is unlikely to be the last word in cool. 
 
 
-## Day 1: Sonar Sweep
+## [Day 1: Sonar Sweep](https://adventofcode.com/2021/day/1)
 
-Every puzzle has the same first step: ingesting the data.
-We‘re proud of how easy it is to convert each day’s text file into a tractable q data structure.
-```q
-q)show d:"J"$read0 `:day1.txt
-148 167 168 169 182 188 193 209 195 206 214 219 225 219 211 215 216 195 200 1..
+Our first puzzle shows off how easily q converts a text file to tractable data in memory, and explores some subtleties of the Each Prior iterator, including the mysteries of why you sometimes need to parenthesise a derived function.
+
+### Ingestion
+
+Every puzzle starts by ingesting a text file.
+
+```txt
+199
+200
+208
+210
+200
+207
+240
+269
+260
+263
 ```
+[Tok](https://code.kx.com/q/ref/tok/) and [`read0`](https://code.kx.com/q/ref/read0/) eat that up.
+```q
+q)show d:"J"$read0 `:test1.txt
+199 200 208 210 200 207 240 269 260 263
+```
+
+### Part 1
+
 How many of these depth measurements are larger than the previous measurement?
 
-The [Each Prior](https://code.kx.com/q/ref/maps/#each-prior) iterator applied to the Greater Than operator `>` derives a function `>':` that tells us exactly that. 
-We use it with a zero left argument for the first comparison.
+The [Each Prior](https://code.kx.com/q/ref/maps/#each-prior) iterator applied to the Greater Than operator `>` derives a function Greater Than Each Prior that tells us exactly that. Notice that the iterator `':` is applied *postifx*; that is, its argument, the Greater Than operator, is written on its left:  
+```q
+>':
+```
+A function derived this way (with postfix syntax) has infix syntax. We apply it with a zero left argument for the first comparison.
 ```q
 q)0>':d
-11111111011110011010111111010111111101100011111001101110110011100110111101110..
+1111011101b
 ```
 We’re not interested in the first comparison, so we discard it and count the remaining hits.
 ```q
 q)sum 1_ 0>':d
-1400i
+7
 ```
 Because we are not interested in the first comparison, the 0 could be any integer.
-Perhaps better to get rid of it entirely, and apply `>':` as a unary, using either bracket or prefix syntax.
+Perhaps better to get rid of it entirely.
+
+Functions derived from Each Prior are [variadic](https://code.kx.com/q/basics/glossary/#variadic), which is to say that for a binary `f` you can apply `f':` as either a binary (as above) or as a unary, using either bracket or prefix syntax.
 ```q
 q)sum 1_ >':[d] / bracket
-1400i
+7i
 q)sum 1_ (>':)d / prefix
-1400i
+7i
 ```
-Without the 0 left argument to `>':`, q has its own rules for what to compare the first item of `d` to. 
-We don’t care, but you can read about these [defaults](https://code.kx.com/q/ref/maps/#each-prior).
+**Detail:** those parentheses. Any function can be applied with bracket notation. So `>':` can be applied that way as a unary like any other unary, i.e. as `>':[d]`. Why can’t we apply it prefix like other unaries? For example, as `>':d`? 
 
-We see above that the derived function `>':` is variadic: we can apply it as either a unary or a binary. 
-Applying it as a unary means we could instead use the [`prior`](https://code.kx.com/q/ref/prior) keyword.
+The answer is above: applying the iterator *postfix*, derives a function `>':` that has *infix* syntax, which the parser won’t apply prefix. However, with parentheses round it, it has *noun* syntax – like a list – and, like a list, *can* be applied prefix.
+
+**Extra detail**: *Any function can be applied with bracket notation.* Iterators are functions. Normal practice is to apply them postfix, but Greater Than Each Prior can also be written `':[>]`. (Not recommended: the unusual syntax would confuse most readers.) Written this way, it is still variadic, but no longer has infix syntax, and so *can* be applied prefix as a unary.
+```q
+q)':[>][0;d]  / applied as binary (bracket)
+1111011101b
+q)':[>]d      / applied as unary (prefix)
+1111011101b
+```
+
+Applied as a unary, without the 0 left argument, q has its own rules for what to compare the first item of `d` to. 
+In this problem, we don’t care, but you can read about these [defaults](https://code.kx.com/q/ref/maps/#each-prior).
+
+Applying Greater Than Each Prior as a unary means we could instead use the [`prior`](https://code.kx.com/q/ref/prior) keyword.
 ```q
 q)sum 1 _ (>) prior d
-1400i
+7i
 ```
-That is better q style, and perhaps the coolest way to write the solution. 
+Using keywords is better q style, and perhaps the coolest way to write the solution. 
 
 Note the parens in `(>)`, which give it noun syntax. 
 That is, the parser reads it as the left argument of `prior` rather than trying to apply it. 
+
+### Part 2
+
 With this as a model, part 2 looks simple. 
 We want the 3-point moving sums of `d`, of which we shall ignore the first two.
 ```q
-q)a:()!"j"$() / answers
-q)a[`$"1-1"]:sum 1 _ (>) prior d
-q)a[`$"1-2"]:sum 1 _ (>) prior 2 _ 3 msum d
-q)show a
-1-1| 1400
-1-2| 1429
+a:()!"j"$() / answers
+d:"J"$read0`:day1.txt`
+a[`$"1-1"]:sum 1 _ (>) prior d
+a[`$"1-2"]:sum 1 _ (>) prior 2 _ 3 msum d
 ```
 Oleg Finkelshteyn has a simpler (and faster) solution that baffles me.
 ```q
-q)sum(3_d)>-3_d
-1429
+sum(3_d)>-3_d
 ```
-Factoring out the repeated 3s, I prefer this as
-```q
-q)sum .[>] (1 neg\3)_\:d
-1429
-```
-but still cannot see why comparing `d[i]` to `d[i-3]` gives the same result as comparing the moving sums. Help, anyone?
+Why does comparing `d[i]` to `d[i-3]` give the same result as comparing the moving sums?
 
 
-## Day 2: Dive!
+## [Day 2: Dive!](https://adventofcode.com/2021/day/2)
 
-Today‘s problem solution uses projections to ingest the data, then a table to think through a solution to the second part. Finally we reduce the table solution to a simpler vector expression.
+Today’s problem solution uses projections to ingest the data, then a table to think through a solution to the second part. Finally we reduce the table solution to a simple vector expression.
+
+### Ingestion 
 
 The text file consists of course adjustments that affect horizontal position and depth.
 ```txt
@@ -145,14 +178,14 @@ q)sum each crs[`fwd`down]
 15 60
 ```
 But the `down` column is no more than the product of the `fwd` column and the accumulated sums of the `ud` column. 
-We can express the whole thing in terms of the `fwd` and `ud`vectors.
+We can express the whole thing in terms of the `fwd` and `ud` vectors.
 ```q
 q)`fwd:`ud set'flip c  / forward; up-down
 q)prd sum each(fwd;fwd*sums ud)
 900
 ```
 The repetition of `fwd` draws the eye. 
-Isn’t `(wd;fwd*sums ud)` just `fwd` multiplied by 1 and by `sums ud`?
+Isn’t `(fwd;fwd*sums ud)` just `fwd` multiplied by 1 and by `sums ud`?
 ```q
 q)prd sum fwd*1,'sums ud
 900
@@ -168,133 +201,169 @@ c:value each read0`:day2.txt
 a[`$"2-2"]:prd sum c
 a[`$"2-2"]:prd sum {x*1,'sums y}. flip c
 ```
+The table operations were a helpful way to visualise the elements of the problem. On study, they refactored to a much simpler vector solution. 
 
-## Day 3: Binary Diagnostic
+
+## [Day 3: Binary Diagnostic](https://adventofcode.com/2021/day/3)
+
+In today’s problem we 
+
+*    abstract from two algorithms by passing an operator as argument
+*    meet the Zen monks using the Do iterators
+*    use the Do iterator to repeatedly apply a filter
+
+### Ingestion
 
 Ingestion here is a treat. 
+We rely on the iteration implicit in the Equal operator. 
 Comparing the file lines to `"1"` gets us a boolean matrix.
 ```q
-q)show dg:"1"=read0`:day3.txt / diagnostic
-110011110101b
-110011100010b
-010100011010b
-011001100000b
-010011011101b
-..
+q)show dg:"1"=read0`:test3.txt / diagnostic
+00100b
+11110b
+10110b
+10111b
+10101b
+01111b
+00111b
+11100b
+10000b
+11001b
+00010b
+01010b
 ```
 
 ### Part 1
 
-Finding the most common bit is just comparing the the sum of `dg` to half its count.
+Finding the most common bits is just comparing the the sum of `dg` to half its count.
 ```q
 q)sum[dg]>=count[dg]%2  / gamma bits
-001110101101b
+10110b
 ```
-And the least-common bit is a slight variation.
+And the least-common bits are… not them.
 ```q
 q)sum[dg]<count[dg]%2  / epsilon bits
-110001010010b
+01001b
 ```
-which suggests finding both with a projection. 
-```q
-q)(>=;<){.[x](sum y;count[y]%2)}\:dg
-001110101101b
-110001010010b
-```
-Above, a comparison operator is passed to the lambda as its left argument.
-Within the lambda, the [Apply operator](https://code.kx.com/q/ref/apply/) `.` is used to compare `sum y`
-and `count[y]%2`. The [Each Left map iterator](https://code.kx.com/q/ref/maps#each-left-and-each-right) applies the lambda between the two compariuson operators and the diagnostic matrix. 
+— How many Zen monks does it take to change a lightbulb?
+<br>
+— Two. *One to change it, one not to change it.* 
 
-All that remains is to encode these two binary numbers as decimals and get their product. 
-The complete solution:
+So I think of this pattern <code>1 f\\</code> of the [Do](https://code.kx.coom/q/ref/acclmulators/#do) iterator as the Zen monks. 
 ```q
-q)prd 2 sv'(>=;<){.[x](sum y;count[y]%2)}\:"1"=read0`:day3.txt
-2967914
+q)1 not\sum[dg]>=count[dg]%2  / epsilon and gamma bits
+10110b
+01001b
 ```
+All that remains is to encode these two binary numbers as decimals and get their product. 
+```q
+q)prd 2 sv'1 not\sum[dg]>=count[dg]%2
+198
+```
+The [`sv`](https://code.kx.com/q/ref/sv/) keyword is a bit of a ‘portmanteau’ function. The common theme is scalar (atom) from vector. In the domain of integers it interprets a vector as a number in the base if its left argument. 
 
 ## Part 2
 
 To find the oxygen generator rating we need to filter the rows of `dg` by an aggregation (most-common bit) of its first column, and so on. 
 We are going to have to specify the iteration. 
-Start by naming the aggregator we already defined.
+
+A succession of filters suggests an [Accumulator](https://code.kx.com/q/ref/accumulators/) iteration, where the result of one iteration is the argument of the next. 
+
+We’ll use a binary filter function. One argument will be a bit vector. The other will be a comparison operator corresponding to most-common bit (`>=`) or least-common bit (`<`).
 ```q
-bc:{.[x](sum y;count[y]%2)}  / bit counter
+fltr:{[op;bits]where bits=.[op]1 .5*(sum;count)@\:bits}
 ```
-Instead of working across the columns of `dg` we’ll flip it and iterate through its items (rows).
-As each iteration will use the result of the previous iteration, we need the [Accumulator iterators](https://code.kx.com/ref/acumulators/). 
+Using the [Apply](https://code.kx.com/q/ref/apply/) operator to apply the comparison operator between the items of a pair allows us to pass the comparison operator to `fltr` as an argument. 
+
+To work across the columns of `dg` we’ll flip it so its columns become the items of a list.
 We’ll use the Scan iterator to filter the rows of `flip dg` until the next iteration would leave no rows left. 
-Initially, all the rows are ‘in’.
+
+We start with all the rows: `til count dg`. We want some binary function `f` so our iteration is
 ```q
-(til count dg){$[count i:x where test y x;i;x]}/flip dg
+(til count dg)f/flip dg
+```
+The function `f` we want will take as its left argument a list of row indices. Its right argument will be a bit vector – the successive columns of `dg`. Its result will be a list of row indices to be used for the next iteration. We need it to stop filtering before the last indices are gone.
+Here’s `f`:
+```q
+(til count dg){$[count i:fltr[>=]y x;x i;x]}/flip dg
 ```
 Here we can see the structure of the iteration. 
 The initial state `til count dg` is a list of all the rows of`dg`.
 The lambda being iterated tests the first column of `dg` and returns the rows that pass the test. 
 Only the rows listed in the left argument are tested, so eliminated rows stay eliminated. 
 
-Our `test` function will take a boolean vector and return the indexes that match the most-common bit. 
-
-We can use the Scan iterator to watch the row indexes being filtered. 
+We can use the Scan form of the Do iterator to watch the rows being filtered. 
 ```q
-q)(til count dg) {$[count i:x where y[x]=bc[>=]y x;i;x]}\ flip"1"=read0`:test3.txt
-1 2 3 4 7 8 9
-2 3 4 8
-2 3 4
-2 3
-,3
-q)dg 3
-10111b
+q)dg(til count dg){$[count i:fltr[>=]y x;x i;x]}\flip dg
+(11110b;10110b;10111b;10101b;11100b;10000b;11001b)
+(10110b;10111b;10101b;10000b)
+(10110b;10111b;10101b)
+(10110b;10111b)
+,10111b
 ```
 That is the oxygen generator rating for the test data. 
-Switching the comparison operator wil give us the CO2 scrubber rating.
-So to be tidy, let’s make the comparison operator an argument of the lambda.
+Switching the comparison operator will give us the CO2 scrubber rating.
+Let’s make the comparison operator the lambda’s third argument, and embed the iteration in a function that returns the winning row.
 ```q
-q)(til count dg) {$[count i:x where y[x]=bc[z]y x;i;x]}[;;>=]\ flip"1"=read0`:test3.txt
-1 2 3 4 7 8 9
-2 3 4 8
-2 3 4
-2 3
-,3
-q)(til count dg) {$[count i:x where y[x]=bc[z]y x;i;x]}[;;<]\ flip"1"=read0`:test3.txt
-0 5 6 10 11
-5 11
-,11
-,11
-,11
-q)dg 11
-01010b
+q)analyze:{y first(til count y){$[count i:fltr[z;] y x;x i;x]}[;;x]/flip y}
+q)analyze[>=] dg
+10111b
 ```
-And there’s the CO2 scrubber rating for the test data.
-On to the puzzle data.
+Afterthoughts: we pass the comparison operators At Least `>=` and Less Than `<` as arguments to `analyze` to determine most-common or least-common bits. That leaves scope for extending the solution to other comparisons. 
+But the problem here requires only most-common or least-common, which is At Least and its negation. 
+
+The Zen monks can help us avoid doing too much. 
+
+*Don’t just do something – sit there!*
+
+Instead of passing the operators as arguments, we could pass a 0 or 1 according to whether we want most-common or least-common bits.
+It might also improve legibility to separate testing the filter results from the Do iteration. 
+
+That leaves our complete solution:
 ```q
-q)dg:"1"=read0`:day3.txt
-q)ogri:first(til count dg) {$[count i:x where y[x]=bc[z]y x;i;x]}[;;>=]/ flip dg / find O2 generator rating
-q)csri:first(til count dg) {$[count i:x where y[x]=bc[z]y x;i;x]}[;;<]/ flip dg  / find CO2 scrubberr rating
-q)dg ogri,csri
-011110000111b
-111001000110b
-q)prd 2 sv'dg ogri,csri
-7041258
+dg:"1"=read0`:test3.txt
+a[`$"3-1"]:prd 2 sv'1 not\(sum dg)>=(count dg)%2
+fltr:{x=(sum x)>=(count x)%2}  / flag matches to most-common bit
+filter:{x@$[count i:where z not/fltr y x;i;::]}  / filter rows
+rating:{y first(til count y)filter[;;x]/flip y} 
+OGCS:0 1 / O2 generator; CO2 scrubber
+a[`$"3-2"]:prd 2 sv'OGCS rating\:dg
 ```
 
-## Day 4: Giant Squid
+## [Day 4: Giant Squid](https://adventofcode.com/2021/day/4)
 
-The bingo boards are nicely readable in the text file, but we shall find them more tractable as vectors.
+In the solving today’s problem we shall
+
+* represent matrices as vectors, finding vectors more tractable
+* work with a 3-dimensional array
+* rather than looping and testing, we’ll do a classic array-language ‘overcompute’ and analyse the results
+
+### Ingestion
+
+The bingo boards are nicely readable in the text file, but will be more tractable as vectors.
+
+Empty lines in the text file show us where to divide it into matrices.
 ```q
 q)q:read0`:test4.txt
-q)nums:value first q
+q)show nums:value first q
+7 4 9 5 11 17 23 2 0 14 21 24 10 16 13 6 15 25 12 22 18 20 8 19 3 26 1
 q)show boards:value each" "sv'(where 0=count each q)cut q
 22 13 17 11 0  8  2  23 4  24 21 9 14 16 7  6  10 3  18 5 1  12 20 15 19
 3  15 0  2  22 9  18 13 17 5  19 8 7  25 23 20 11 10 24 4 14 21 16 12 6
 14 21 17 24 4  10 16 15 9  19 18 8 23 26 20 22 11 13 6  5 2  0  12 3  7
 ```
+
+### Part 1
+
 A perfectly sensible looping approach would follow real life. We would call each number and see if any board has won. 
 
 We’re not going to do that. We’re going to call all the numbers and see where the wins occur.
 ```q
 s:(or\')boards=/:\:nums  / states: call all the numbers in turn
 ```
-The derived function `=/:\:` (Equal Each Right Each Left) gives us a cross-product on the Equal operator. The list `boards=/:\:nums` has an item for each board. Each item is a boolean matrix: a row for each of the called numbers, the columns corresponding to the board numbers. Here’s the first board with 1s flagging the numbers as they are called in turn.
+The derived function `=/:\:` (Equal Each Right Each Left) gives us a Cartesian product on the Equal operator. The list `boards` is a matrix; list `nums` is a vector; the Cartesian product has three dimensions. Put another way, `boards` has rank 2; `nums` rank 1; so their Cartesian product has rank 3. 
+
+The list `boards=/:\:nums` has an item for each board. Each item is a boolean matrix: the rows correspond to the called numbers, the columns to the board numbers. Here’s the first board: 1s flag the matches as they are called.
 ```q
 q)first boards=/:\:nums
 0000000000000010000000000b
@@ -305,6 +374,15 @@ q)first boards=/:\:nums
 0010000000000000000000000b
 ..
 ```
+That 1 in the top row should correspond to the first number called.
+```q
+q)boards[0]where first first board=/:\:nums
+,7
+q)first nums
+7
+```
+Bingo.
+
 Of course, once a number is called, it stays called.
 ```q
 q)(or\)first boards=/:\:nums
@@ -320,8 +398,11 @@ That is just the first board. We want the same for every board.
 ```q
 s:(or\')boards=/:\:nums  / states: call all the numbers in turn
 ```
+The transformation above is a useful pattern. 
+Use the first item of a list to figure out what (function) to apply to it (here `(or\)`); then drop the `first` and Each the function. 
+
 How to tell if a board has won? 
-Here is the state of board 0 after 9 numbers have been called. 
+Here is the state of board 0 after nine numbers have been called. 
 ```q
 q)s[0;9;]
 0011101110011010000100000b
@@ -335,7 +416,7 @@ q)5 cut s[0;9;]
 00001b
 00000b
 ```
-Clearly not. That would require all 1s on at least one row. Or a column.
+No: that would require all 1s on at least one row. Or a column.
 ```q
 q)any all each {x,flip x}5 cut s[0;9;]
 0b
@@ -367,9 +448,17 @@ q)sum boards[2] where not s[2;11;] / sum the unmarked numbers
 q)nums[11]*sum boards[2] where not s[2;11;] / board score
 4512
 ```
+
+### Part 2
+
+For Part 2 we want the state of the losing board when it finally ‘wins’. That is board 1 after the 14th number.
+```q
+q)nums[14]*sum boards[1] where not s[1;14;]
+1924
+```
 That makes our complete solution:
 ```q
-q:read0`:test4.txt
+q:read0`:day4.txt
 nums:value first q
 boards:value each" "sv'(where 0=count each q)cut q
 
@@ -380,14 +469,22 @@ a[`$"4-1"]:bs . {m,x?m:min x} w / winning board score
 a[`$"4-2"]:bs . {m,x?m:max x} w / losing board score
 ```
 This is a nice example of the ‘overcomputing’ characteristic of vector languages. 
-Clearly, an efficient algorithm would stop when it reached the first win. 
+Clearly, an efficient algorithm could stop when it reached the first win. 
 Or, for Part 2, the last win. 
 
 But sometimes it is convenient to calculate all the results and search them. 
 And, with vector operations, sometimes it is faster as well. 
 
 
-## Day 5: Hydrothermal Venture
+## Day [5: Hydrothermal Venture](https://adventofcode.com/2021/day/5)
+
+In solving today’s challenge, we
+
+* write a simple function (ascending range) then wrap it to handle a larger domain
+* use a test to index into a list of functions: equivalent to a case expression 
+* index a string with a matrix to visualise the matrix
+
+### Ingestion
 
 Each vent is defined by two co-ordinate pairs.
 We’ll represent the vents as a list of 2×2 matrices.
@@ -403,14 +500,17 @@ q)show vents:{value"(",ssr[;"->";";"]x,")"}each read0 `:test5.txt
 3 4 1 4
 0 0 8 8
 5 5 8 2
-q)first vents
-0 9
-5 9
 ```
 
 
 ### Part 1
 
+```q
+
+q)first vents
+0 9
+5 9
+```
 The second coords match so this is a horizontal line through
 ```q
 0 9
@@ -424,7 +524,7 @@ which we could express as `(range 0 5),'range 9 9`. We need only
 ```q
 q)rng:{x+til y-x-1}  / ascending range
 q)range:{@[;x](reverse rng reverse@;rng;first)2 sv(=;<).\:x}
-q)range each (5 9;5 3;9 9)
+q)range each (5 9;5 3;9 9)  / some test cases
 5 6 7 8 9
 5 4 3
 9
@@ -539,14 +639,30 @@ a[`$"5-2"]:chp plot vents
 ```
 
 
-## Day 6: Lanternfish
+## [Day 6: Lanternfish](https://adventofcode.com/2021/day/6)
+
+In solving today’s challenge we
+
+* start with a naive strategy then get smarter
+* use the Do iterator
+* overcompute rather than iterate twice or write test logic
+
+### Ingestion 
+
+The first line of the text file is an integer vector. It does not get easier than this.
+
+```q
+lf:value first read0`:day6.txt
+```
+
 
 ### Part 1
 
-It’s tempting to model the lanternfish population as a vector of timer states, subtracting 1 on each day, resetting each 0 to 6 and appending an 8.
+It’s tempting to model the lanternfish population as presented: as a vector of timer states, subtracting 1 on each day, resetting each 0 to 6 and appending an 8.
 That lets us model progress day by day.
 ```q
-q)3{,[;sum[n]#8] (x-1)+7*n:x=0}\3 4 3 1 2
+q)lf:3 4 3 1 2
+q)3{,[;sum[n]#8] (x-1)+7*n:x=0}\lf
 3 4 3 1 2
 2 3 2 0 1
 1 2 1 6 0 8
@@ -554,9 +670,9 @@ q)3{,[;sum[n]#8] (x-1)+7*n:x=0}\3 4 3 1 2
 ```
 And count them after 18 and 80 days.
 ```q
-q)count 18{,[;sum[n]#8] (x-1)+7*n:x=0}/3 4 3 1 2
+q)count 18{,[;sum[n]#8] (x-1)+7*n:x=0}/lf
 26
-q)count 80{,[;sum[n]#8] (x-1)+7*n:x=0}/3 4 3 1 2
+q)count 80{,[;sum[n]#8] (x-1)+7*n:x=0}/lf
 5934
 ```
 
@@ -567,7 +683,7 @@ But all this gets out of hand over 256 days as the vector count exceeds 26 billi
 A vector is an *ordered* list, but we do not need the lanternfish in any order. We need only represent how many fish have their timers in a given state. 
 We could do this with a dictionary. 
 ```q
-q)count each group 3 4 3 1 2
+q)count each group lf
 3| 2
 4| 1
 1| 1
@@ -576,16 +692,15 @@ q)count each group 3 4 3 1 2
 But even this is more information than we need. There are only nine possible timer values. 
 A vector of nine integers will number the fish at each timer state.
 ```q
-q)show lf:@[9#0;;1+]3 4 3 1 2  / lanternfish school
+q)show lf:@[9#0;;1+]lf  / lanternfish school
 0 1 1 2 1 0 0 0 0
 ```
 Notice in the application of [Amend At](https://code.kx.com/q/ref/amend/) above the index vector `3 4 3 1 2` contains two 3s. 
 The unary third argument of Amend At, `1+`, is applied twice at index 3. 
 The iteration is implicit in Amend At and need not be specified. 
 
-Now we represent a day’s count-down with a `1 rotate`, which happily rotates the fish with expired timers round to position 8. 
-But position 8 represents newly spawned fish. 
-So we need also to reset their parents’ timers by adding them at position 6.
+Now we can represent a day’s action with a `1 rotate`, which happily rotates the fish with expired timers round to position 8. 
+But position 8 represents newly spawned fish: we also need to reset their parents’ timers by adding them at position 6.
 ```q
 q)3 {@[1 rotate x;6;+;first x]}\ lf
 0 1 1 2 1 0 0 0 0
@@ -603,10 +718,27 @@ Our complete solution:
 lf:@[9#0;;1+] value first read0`:day6.txt
 a[`$("6-1";"6-2")]:sum each @[;80 256] 256{@[1 rotate x;6;+;first 0]}\lf
 ```
-Above, rather than run the same iteration first 80 then 256 times, we have run it 256 times with Scan, then selected the 80th and 256th state vectors from the result.
+Above, rather than run the same iteration first 80 then 256 times with Over, we have run it 256 times with Scan, then selected the 80th and 256th state vectors from the result. 
 
 
-## Day 7: The Treachery of Whales
+## [Day 7: The Treachery of Whales](https://adventofcode.com/2021/day/7)
+
+In solving today’s problem we
+
+* represent a sparse array as a dictionary
+* use the While iterator to implement a binary search of a solution space
+* write a function that takes either a function or a list as one of its arguments
+
+### Ingestion
+
+Our one-line text file has a thousand integers separated by commas. 
+Still looks like a vector to q.
+```q
+q)value each read0`:day7.txt
+1101 1 29 67 1102 0 1 65 1008 65 35 66 1005 66 28 1 67 65 20 4 0 1001 65 1 65..
+```
+
+### Part 1
 
 We can represent crab positions as an integer vector.
 ```q
@@ -659,12 +791,12 @@ q)show cd:count each group cp  / crab distribution
 ```
 Calculate fuel cost for destination `y` in distribution `x`.
 ```q
-q)fc1:{sum(value x)*abs y-key x}[cd;]  / Part 1 fuel cost of destination 
+q)fc1:{sum(value x)*abs y-key x}[cd;]  / fuel cost of destination (Part 1)
 q)fc1 2  / fuel cost of moving to 2
 37
 ```
 Now we’ll use `fc1` to search the solution space of `til 1+max cd`.
-Calculate the fuel cost at the halfway point and its neighbor. 
+Calculate the fuel cost at the halfway point and its neighbour. 
 According to which cost is higher, drop half the solution space.
 
 We start with a binary-search function. 
@@ -685,7 +817,7 @@ If the midpoint is `m` we want `0,m`. Had the gradient been ‘down’, we’d w
 q)?[;r;m]1 not\.[<]fc1 each 0 1+m:floor med frd
 0 8
 ```
-Note the use of `1 not\`. The form `1 f\x` is a handy functional equivalent of `(x;f x)`.
+The Zen monks in action again!
 We use the result with [Vector Conditional](https://code.kx.com/q/ref/vector-conditional/) `?[;r;m]` to get one half of the range.
 
 This can all be expressed as a binary-search function.
@@ -702,7 +834,7 @@ q)sl:{[n;f;r]{neg[x]>.[-]y}[n;] bs[f;]/r}  / short list
 q)sl[5;fc1;] 0 16
 0 4
 ```
-The last expression above could have been written `sl[5;fc1;0 16]`, but I wrote it as the unary projection of `sl[5;fc1;]` because the result `0 4` is a version of the third argument `0 16`, so writing it as a projection helps the reader see a range transformed into another range. (You might also think of the first two arguments as constraints, options, or parameters; and the third argument as ‘data’.) 
+The last expression above could have been written `sl[5;fc1;0 16]`, but I wrote it as the unary projection of `sl[5;fc1;]` because the result `0 4` is a version of the third argument `0 16`, so writing it as a projection helps the reader see one range transformed into another range. (You might also think of the first two arguments as constraints, options, or parameters; and the third argument as ‘data’.) 
 ```q
 q)min fc each rng sl[fc1;5;] 0 16
 37
@@ -736,3 +868,5 @@ a[`$"7-1"]:min fc[::] each rng sl[fc[::];5;] frd
 fm:sums til 1+max frd
 a[`$"7-2"]:min fc[fm] each rng sl[fc[fm];5;] frd
 ```
+
+The next article in this series will look at the problems in week 2 of the competition. 
