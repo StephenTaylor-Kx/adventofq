@@ -7,16 +7,17 @@ keywords: aoc, vectordojo
 ---
 # The birth of the cool
 
-The annual [Advent of Code](https://adventofcode.com) has become a programmers’ Christmas tradition: a daily series of puzzles of varying difficulty to solve and discuss.
+The annual [Advent of Code competition](https://adventofcode.com) has become a programmers’ Christmas tradition: a daily series of puzzles of varying difficulty to solve and discuss.
 
-This year’s series has raised the excitement level in the dōjō because the puzzles are particularly susceptible to vector solutions. 
-Here is a round-up of the first week in the q vector dōjō. 
+This year’s series has raised the excitement level in the Vector Dōjō because the puzzles are particularly susceptible to vector solutions. 
+Here is a round-up of the first week. 
 
 We nod to code golfers who seek the shortest solutions, and to others pursuing the fastest. 
 But in the dōjō we are looking for the most ‘vector-ish’ solutions. 
 That’s admittedly a bit vague, because it is at bottom an aesthetic criterion. 
-It’s most commonly pronounced “cool”.
+(Usually pronounced “cool”.)
 
+As always in the Vector Dōjō, we are more interested in exploring the process of discovery than in the solutions themselves. 
 Feel free to chime in with comments and alternatives: what follows is unlikely to be the last word in cool. 
 
 
@@ -50,11 +51,11 @@ q)show d:"J"$read0 `:test1.txt
 
 How many of these depth measurements are larger than the previous measurement?
 
-The [Each Prior](https://code.kx.com/q/ref/maps/#each-prior) iterator applied to the Greater Than operator `>` derives a function Greater Than Each Prior that tells us exactly that. Notice that the iterator `':` is applied *postifx*; that is, its argument, the Greater Than operator, is written on its left:  
+The [Each Prior](https://code.kx.com/q/ref/maps/#each-prior) iterator applied to the Greater Than operator `>` derives a function Greater Than Each Prior that tells us exactly that. Notice that the iterator `':` is applied *postfix*; that is, its argument, the Greater Than operator, is written on its left:  
 ```q
 >':
 ```
-A function derived this way (with postfix syntax) has infix syntax. We apply it with a zero left argument for the first comparison.
+A function derived this way (with postfix syntax) has *infix* syntax. We apply it with a zero left argument for the first comparison.
 ```q
 q)0>':d
 1111011101b
@@ -76,9 +77,9 @@ q)sum 1_ (>':)d / prefix
 ```
 **Detail:** those parentheses. Any function can be applied with bracket notation. So `>':` can be applied that way as a unary like any other unary, i.e. as `>':[d]`. Why can’t we apply it prefix like other unaries? For example, as `>':d`? 
 
-The answer is above: applying the iterator *postfix*, derives a function `>':` that has *infix* syntax, which the parser won’t apply prefix. However, with parentheses round it, it has *noun* syntax – like a list – and, like a list, *can* be applied prefix.
+The answer is above: applying the iterator *postfix*, derives a function `>':` that has *infix* syntax, which the parser won’t apply prefix. However, with parentheses round it, it has *noun* syntax – like a list – and, like any list, *can* be applied prefix.
 
-**Extra detail**: *Any function can be applied with bracket notation.* Iterators are functions. Normal practice is to apply them postfix, but Greater Than Each Prior can also be written `':[>]`. (Not recommended: the unusual syntax would confuse most readers.) Written this way, it is still variadic, but no longer has infix syntax, and so *can* be applied prefix as a unary.
+**Extra detail**: *Any function can be applied with bracket notation.* Iterators are functions too and the rule applies to them as well. Normal practice is to apply an iterator postfix, but Greater Than Each Prior can also be written `':[>]`. (Not recommended: the unusual syntax is likely to confuse a reader.) Written this way, it is still variadic, but no longer has infix syntax, and so *can* be applied prefix as a unary.
 ```q
 q)':[>][0;d]  / applied as binary (bracket)
 1111011101b
@@ -86,10 +87,10 @@ q)':[>]d      / applied as unary (prefix)
 1111011101b
 ```
 
-Applied as a unary, without the 0 left argument, q has its own rules for what to compare the first item of `d` to. 
+Applying it as a unary, without the 0 left argument, q has its own rules for what to compare the first item of `d` to. 
 In this problem, we don’t care, but you can read about these [defaults](https://code.kx.com/q/ref/maps/#each-prior).
 
-Applying Greater Than Each Prior as a unary means we could instead use the [`prior`](https://code.kx.com/q/ref/prior) keyword.
+Because we are applying Greater Than Each Prior as a unary, we could instead use the [`prior`](https://code.kx.com/q/ref/prior) keyword.
 ```q
 q)sum 1 _ (>) prior d
 7i
@@ -97,12 +98,12 @@ q)sum 1 _ (>) prior d
 Using keywords is better q style, and perhaps the coolest way to write the solution. 
 
 Note the parens in `(>)`, which give it noun syntax. 
-That is, the parser reads it as the left argument of `prior` rather than trying to apply it. 
+The parser reads it as the left argument of `prior` and does not try to apply it. 
 
 ### Part 2
 
 With this as a model, part 2 looks simple. 
-We want the 3-point moving sums of `d`, of which we shall ignore the first two.
+We want the 3-point moving sums of `d`, of which we ignore the first two.
 ```q
 a:()!"j"$() / answers
 d:"J"$read0`:day1.txt`
@@ -131,9 +132,6 @@ up 3
 down 8
 forward 2
 ```
-
-### Part 1
-
 Take the starting position and depth as `0 0`. 
 ```q
 q)forward:1 0*; down:0 1*; up:0 -1*
@@ -145,6 +143,9 @@ q)show c:value each read0`:test2.txt
 0 8
 2 0
 ```
+
+### Part 1
+
 The final position and depth are simply the sum of `c` and the answer to part 1 is their product.
 ```q
 q)prd sum c
@@ -153,7 +154,7 @@ q)prd sum c
 
 ### Part 2
 
-Part 2 complicates the picture. The first column of `c` still describes forward movements. But we now need to calculate ‘aim’. Up and Down now adjust aim. Depth changes by the product of forward motion and aim.
+Part 2 complicates the picture. The first column of `c` still describes forward movements. But we now need to calculate ‘aim’. Up and Down now adjust aim, not depth. Depth changes by the product of forward motion and aim.
 
 A table can help us to think this through.
 ```q
@@ -184,7 +185,7 @@ q)`fwd:`ud set'flip c  / forward; up-down
 q)prd sum each(fwd;fwd*sums ud)
 900
 ```
-The repetition of `fwd` draws the eye. 
+The repetition of `fwd` catches the eye. 
 Isn’t `(fwd;fwd*sums ud)` just `fwd` multiplied by 1 and by `sums ud`?
 ```q
 q)prd sum fwd*1,'sums ud
@@ -215,7 +216,7 @@ In today’s problem we
 ### Ingestion
 
 Ingestion here is a treat. 
-We rely on the iteration implicit in the Equal operator. 
+We rely on the atomic iteration implicit in the Equal operator. 
 Comparing the file lines to `"1"` gets us a boolean matrix.
 ```q
 q)show dg:"1"=read0`:test3.txt / diagnostic
@@ -260,7 +261,7 @@ All that remains is to encode these two binary numbers as decimals and get their
 q)prd 2 sv'1 not\sum[dg]>=count[dg]%2
 198
 ```
-The [`sv`](https://code.kx.com/q/ref/sv/) keyword is a bit of a ‘portmanteau’ function. The common theme is scalar (atom) from vector. In the domain of integers it interprets a vector as a number in the base if its left argument. 
+The [`sv`](https://code.kx.com/q/ref/sv/) keyword is a bit of a ‘portmanteau’ function. The common theme is scalar (atom) from vector. In the domain of integers it interprets a vector as a number in the base of its left argument. 
 
 ## Part 2
 
@@ -323,10 +324,10 @@ That leaves our complete solution:
 ```q
 dg:"1"=read0`:test3.txt
 a[`$"3-1"]:prd 2 sv'1 not\(sum dg)>=(count dg)%2
-fltr:{x=(sum x)>=(count x)%2}  / flag matches to most-common bit
+fltr:{x=(sum x)>=(count x)%2}                    / flag matches to most-common bit
 filter:{x@$[count i:where z not/fltr y x;i;::]}  / filter rows
 rating:{y first(til count y)filter[;;x]/flip y} 
-OGCS:0 1 / O2 generator; CO2 scrubber
+OGCS:0 1                                         / O2 generator; CO2 scrubber
 a[`$"3-2"]:prd 2 sv'OGCS rating\:dg
 ```
 
@@ -341,6 +342,24 @@ In the solving today’s problem we shall
 ### Ingestion
 
 The bingo boards are nicely readable in the text file, but will be more tractable as vectors.
+```txt
+14,30,18,8,3,10,77,4,48,67,28,38,63,43,62,12,68,88,54,32,17,21,83,64,97,53,24,2,60,96,86,23,20,93,65,34,45,46,42,49,71,9,61,16,31,1,29,40,59,87,95,41,39,27,6,25,19,58,80,81,50,79,73,15,70,37,92,94,7,55,85,98,5,84,99,26,66,57,82,75,22,89,74,36,11,76,56,33,13,72,35,78,47,91,51,44,69,0,90,52
+
+13 62 38 10 41
+93 59 60 74 75
+79 18 57 90 28
+56 76 34 96 84
+78 42 69 14 19
+
+96 38 62  8  7
+78 50 53 29 81
+88 45 34 58 52
+33 76 13 54 68
+59 95 10 80 63
+
+36 26 74 29 55
+...
+```
 
 Empty lines in the text file show us where to divide it into matrices.
 ```q
@@ -399,7 +418,7 @@ That is just the first board. We want the same for every board.
 s:(or\')boards=/:\:nums  / states: call all the numbers in turn
 ```
 The transformation above is a useful pattern. 
-Use the first item of a list to figure out what (function) to apply to it (here `(or\)`); then drop the `first` and Each the function. 
+Use the first item of a list to figure out what (function) to apply to an item  (here it is `(or\)`); then drop the `first` and Each the function. 
 
 How to tell if a board has won? 
 Here is the state of board 0 after nine numbers have been called. 
@@ -462,11 +481,11 @@ q:read0`:day4.txt
 nums:value first q
 boards:value each" "sv'(where 0=count each q)cut q
 
-s:(or\')boards=/:\:nums  / states: call all the numbers in turn
+s:(or\')boards=/:\:nums                             / states: call all the numbers in turn
 w:sum each not{any all each b,flip b:5 cut x}''[s]  / flag wins
-bs:{nums[x]*sum boards[y] where not s[y;x;]} / score for board y after xth number
-a[`$"4-1"]:bs . {m,x?m:min x} w / winning board score
-a[`$"4-2"]:bs . {m,x?m:max x} w / losing board score
+bs:{nums[x]*sum boards[y] where not s[y;x;]}        / score for board y after xth number
+a[`$"4-1"]:bs . {m,x?m:min x} w                     / winning board score
+a[`$"4-2"]:bs . {m,x?m:max x} w                     / losing board score
 ```
 This is a nice example of the ‘overcomputing’ characteristic of vector languages. 
 Clearly, an efficient algorithm could stop when it reached the first win. 
@@ -487,6 +506,18 @@ In solving today’s challenge, we
 ### Ingestion
 
 Each vent is defined by two co-ordinate pairs.
+```q
+0,9 -> 5,9
+8,0 -> 0,8
+9,4 -> 3,4
+2,2 -> 2,1
+7,0 -> 7,4
+6,4 -> 2,0
+0,9 -> 2,9
+3,4 -> 1,4
+0,0 -> 8,8
+5,5 -> 8,2
+```
 We’ll represent the vents as a list of 2×2 matrices.
 ```q
 q)show vents:{value"(",ssr[;"->";";"]x,")"}each read0 `:test5.txt
@@ -506,7 +537,6 @@ q)show vents:{value"(",ssr[;"->";";"]x,")"}each read0 `:test5.txt
 ### Part 1
 
 ```q
-
 q)first vents
 0 9
 5 9
@@ -520,23 +550,18 @@ The second coords match so this is a horizontal line through
 4 9
 5 9
 ```
-which we could express as `(range 0 5),'range 9 9`. We need only 
+which we could express as `(rng 0 5),'rng 9 9` if we had a function `rng` that returns an atom for `9 9`. We need only 
 ```q
-q)rng:{x+til y-x-1}  / ascending range
-q)range:{@[;x](reverse rng reverse@;rng;first)2 sv(=;<).\:x}
-q)range each (5 9;5 3;9 9)  / some test cases
+q)range:{r:(::;reverse).[>]x;r{x+til y-x-1}. r x}
+q)rng:{(0 1 .[=]x)first/range x}
+q)rng each (5 9;5 3;9 9)  / some test cases
 5 6 7 8 9
 5 4 3
 9
 ```
 to get the points crossed by a vent.
-
-Note how `range` tests its argument pair for both equality and ascending, takes the resulting boolean pair as a decimal and indexes a list of three functions – equivalent to a case statement. 
-But we can do better. If we move the test for equality into `rng`, both functions can be expressed with the ternary conditional [Cond](https://code.kx.com/q/ref/cond/).
 ```q
-q)rng:{$[x=y;x;x+til y-x-1]}.  / range (not descending)
-q)range:{$[.[>]x;reverse rng reverse x;rng x]}
-q)pts:{.[,']range each flip x}
+q)pts:{.[,']rng each flip x}
 q)([]v:vents;p:pts each vents)
 v       p
 ---------------------------------------------
@@ -627,12 +652,12 @@ q)flip " 1234"10 cut{@[100#0;key x;:;value x]}count each group 10 sv'raze pts ea
 ```
 That leaves our complete solution:
 ```q
-vents:{value"(",ssr[;"->";";"]x,")"}each read0 `:day5.txt
-rng:{$[x=y;x;x+til y-x-1]}.  / range (ascending only)
-range:{$[.[>]x;reverse rng reverse x;rng x]}
-pts:{.[,']range each flip x}  / points of a vent
+vents:{value"(",ssr[;"->";";"]x,")"}each read0`:day5.txt
+range:{r:(::;reverse).[>]x;r{x+til y-x-1}. r x}
+rng:{(0 1 .[=]x)first/range x}                  / range: atom for .[=]x
+pts:{.[,']range each flip x}                    / points of a vent
 plot:{count each group raze pts each x}
-chp:{count where 1<x}  / count hot points
+chp:{count where 1<x}                           / count hot points
 
 a[`$"5-1"]:chp plot vents where {any .[=]x} each vents
 a[`$"5-2"]:chp plot vents
@@ -649,6 +674,9 @@ In solving today’s challenge we
 
 ### Ingestion 
 
+```txt
+2,3,1,3,4,4,1,5,2,3,1,1,4,5,5,3,5,5,4,1,2,1,1,1,1,1,1,4,1,1,1,4 ...
+```
 The first line of the text file is an integer vector. It does not get easier than this.
 
 ```q
@@ -678,7 +706,7 @@ q)count 80{,[;sum[n]#8] (x-1)+7*n:x=0}/lf
 
 ### Part 2
 
-But all this gets out of hand over 256 days as the vector count exceeds 26 billion. 
+But all this quickly gets out of hand. Over 256 days as the vector count exceeds 26 billion. Each append to it entails making a copy.
 
 A vector is an *ordered* list, but we do not need the lanternfish in any order. We need only represent how many fish have their timers in a given state. 
 We could do this with a dictionary. 
@@ -731,6 +759,9 @@ In solving today’s problem we
 
 ### Ingestion
 
+```txt
+1101,1,29,67,1102,0,1,65,1008,65,35,66,1005,66,28,1,67,65,20,4, ...
+```
 Our one-line text file has a thousand integers separated by commas. 
 Still looks like a vector to q.
 ```q
@@ -745,7 +776,7 @@ We can represent crab positions as an integer vector.
 cp:16 1 2 0 4 2 7 1 2 14  / crab positions
 ```
 The distance from `cp` to any position `x` is simply `abs cp-x`.
-A brute-force solution calculates the fuel cost to all possible destinations.
+A naive solution calculates the fuel cost to all possible destinations.
 ```q
 q)abs cp-\:til 1+max cp
 16 15 14 13 12 11 10 9 8 7 6  5  4  3  2  1  0
