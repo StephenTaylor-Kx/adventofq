@@ -246,9 +246,8 @@ And the least-common bits are… not them.
 q)sum[dg]<count[dg]%2  / epsilon bits
 01001b
 ```
-> *— How many Zen monks does it take to change a lightbulb?*
-<br>
-— *Two: one to change it, one not to change it.* 
+> *— How many Zen monks does it take to change a lightbulb?*<br>
+>— *Two: one to change it, one not to change it.* 
 
 So I think of this pattern <code>1 f\\</code> of the [Do](https://code.kx.coom/q/ref/acclmulators/#do) iterator as the Zen monks. 
 ```q
