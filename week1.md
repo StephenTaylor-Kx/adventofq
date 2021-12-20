@@ -246,9 +246,9 @@ And the least-common bits are… not them.
 q)sum[dg]<count[dg]%2  / epsilon bits
 01001b
 ```
-— How many Zen monks does it take to change a lightbulb?
+> *— How many Zen monks does it take to change a lightbulb?*
 <br>
-— Two. *One to change it, one not to change it.* 
+— *Two: one to change it, one not to change it.* 
 
 So I think of this pattern <code>1 f\\</code> of the [Do](https://code.kx.coom/q/ref/acclmulators/#do) iterator as the Zen monks. 
 ```q
@@ -313,9 +313,10 @@ q)analyze[>=] dg
 Afterthoughts: we pass the comparison operators At Least `>=` and Less Than `<` as arguments to `analyze` to determine most-common or least-common bits. That leaves scope for extending the solution to other comparisons. 
 But the problem here requires only most-common or least-common, which is At Least and its negation. 
 
-The Zen monks can help us avoid doing too much. 
+The ternary conditional Cond is a compact way of expressing if/then/else. 
+But everything else being equal, I prefer the Zen monks, who accept everything and act appropriately.
 
-*Don’t just do something – sit there!*
+>*The Great Way is not difficult. It avoids only picking and choosing.* — [Daiyu Myokyo-ni Zenji](https://en.wikipedia.org/wiki/Myokyo-ni)
 
 Instead of passing the operators as arguments, we could pass a 0 or 1 according to whether we want most-common or least-common bits.
 It might also improve legibility to separate testing the filter results from the Do iteration. 
