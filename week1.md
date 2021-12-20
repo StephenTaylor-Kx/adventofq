@@ -322,7 +322,7 @@ It might also improve legibility to separate testing the filter results from the
 
 That leaves our complete solution:
 ```q
-dg:"1"=read0`:test3.txt
+dg:"1"=read0`:day3.txt
 a[`$"3-1"]:prd 2 sv'1 not\(sum dg)>=(count dg)%2
 fltr:{x=(sum x)>=(count x)%2}                    / flag matches to most-common bit
 filter:{x@$[count i:where z not/fltr y x;i;::]}  / filter rows
