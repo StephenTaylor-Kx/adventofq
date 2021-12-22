@@ -121,7 +121,7 @@ Why does comparing `d[i]` to `d[i-3]` give the same result as comparing the movi
 
 Today’s problem solution uses projections to ingest the data, then a table to think through a solution to the second part. Finally we reduce the table solution to a simple vector expression.
 
-### Ingestion 
+### Ingestion
 
 The text file consists of course adjustments that affect horizontal position and depth.
 ```txt
@@ -635,10 +635,38 @@ The general case simply stops excluding the diagonal vents.
 q)chp plot vents
 12
 ```
+
+### Visualisation
+
 We can also check our work against the map.
 For this we’ll represent the 10×10 map as a 100-item vector and map the co-ordinate pairs into the range 0-99. 
 ```q
-q)flip " 1234"10 cut{@[100#0;key x;:;value x]}count each group 10 sv'raze pts each vents
+q)d:count each group 10 sv'raze pts each vents  / coords => (0-99)
+9 | 2
+19| 2
+29| 2
+39| 1
+49| 1
+59| 1
+80| 1
+..
+```
+Decompose the dictionary into key and value lists.
+```q
+q)(key;value)@\:d
+9 19 29 39 49 59 80 71 62 53 44 35 26 17 8 94 84 74 64 54 34 22 21 70 72 73 4..
+2 2  2  1  1  1  1  2  1  2  3  1  1  1  1 1  1  2  3  1  2  2  1  1  1  2  1..
+```
+Apply to these lists this projection of [Amend At](https://code.kx.com/q/ref/amend/) `@[100#0;;:;]`.
+Its two omitted arguments make it a binary function.
+We use [Apply](https://code.kx.com/q/ref/apply/) `.` to apply it to a list of its two arguments.
+```q
+q)@[100#0;;:;].(key;value)@\:d  / map to indices
+1 0 0 0 0 0 0 0 1 2 0 1 0 0 1 0 0 1 0 2 1 1 2 0 1 0 1 0 0 2 0 1 0 1 2 1 0 0 0..
+```
+Putting that together:
+```q
+q)flip " 1234"10 cut @[100#0;;:;].(key;value)@\:count each group 10 sv'raze pts each vents
 "1 1    11 "
 " 111   2  "
 "  2 1 111 "
@@ -672,7 +700,7 @@ In solving today’s challenge we
 * use the Do iterator
 * overcompute rather than iterate twice or write test logic
 
-### Ingestion 
+### Ingestion
 
 ```txt
 2,3,1,3,4,4,1,5,2,3,1,1,4,5,5,3,5,5,4,1,2,1,1,1,1,1,1,4,1,1,1,4 ...
@@ -689,7 +717,7 @@ lf:value first read0`:day6.txt
 It’s tempting to model the lanternfish population as presented: as a vector of timer states, subtracting 1 on each day, resetting each 0 to 6 and appending an 8.
 That lets us model progress day by day.
 ```q
-q)lf:3 4 3 1 2
+q)lf:3 4 3 1 2  / lanternfish: test data
 q)3{,[;sum[n]#8] (x-1)+7*n:x=0}\lf
 3 4 3 1 2
 2 3 2 0 1
@@ -706,7 +734,9 @@ q)count 80{,[;sum[n]#8] (x-1)+7*n:x=0}/lf
 
 ### Part 2
 
-But all this quickly gets out of hand. Over 256 days as the vector count exceeds 26 billion. Each append to it entails making a copy.
+But all this quickly gets out of hand. 
+Each append to the vector entails making a copy.
+Over 256 days the count exceeds 26 billion. 
 
 A vector is an *ordered* list, but we do not need the lanternfish in any order. We need only represent how many fish have their timers in a given state. 
 We could do this with a dictionary. 
